@@ -30,6 +30,9 @@ def submit_survey():
     except ValidationError as ve:
         return jsonify({"error": "validation_error", "detail": ve.errors()}), 422
 
+    hour_stamp = datetime.now(timezone.utc).strftime("%Y%m%d%H")
+    submission_id = submission.submission_id or sha256_hex(email_norm + hour_stamp)
+    
     record = StoredSurveyRecord(
         **submission.dict(),
         received_at=datetime.now(timezone.utc),
@@ -40,12 +43,6 @@ def submit_survey():
 def sha256_hash(s: str) -> str:
     return hashlib.sha256(s.encode("utf-8")).hexdigest()
 
-def generate_submission_id(email: str) -> str:
-    hour_stamp = datetime.utcnow().strftime("%Y%m%d%H")
-    return sha256_hash(email + hour_stamp)
-
-if not record.get("submission_id"):
-    record["submission_id"] = generate_submission_id(record["email"])
 
 if __name__ == "__main__":
     app.run(port=5000, debug=True)
